@@ -1,7 +1,12 @@
-import { _decorator, Component, EventMouse, Input, input, Node, Vec3 } from 'cc';
+import { _decorator, Component, EventMouse, Input, input, Node, Vec3, Animation } from 'cc';
 const { ccclass, property } = _decorator;
 
 export const BLOCK_SIZE = 40;
+
+enum BodyAnimationEnum {
+    ONE_STEP = 'oneStep',
+    TWO_STEP = 'twoStep',
+}
 
 @ccclass('PlayerController')
 export class PlayerController extends Component {
@@ -13,6 +18,10 @@ export class PlayerController extends Component {
     private _curPos: Vec3 = new Vec3();
     private _deltaPos: Vec3 = new Vec3(0, 0, 0);
     private _targetPos: Vec3 = new Vec3();
+
+    @property(Animation)
+    BodyAnimation: Animation = null;
+
     start() {
         input.on(Input.EventType.MOUSE_UP, this.onMouseUp, this);
     }
@@ -28,6 +37,21 @@ export class PlayerController extends Component {
             this.stepEnd();
         } else {
             this.stepTween(deltaTime);
+        }
+    }
+
+    /**
+     * 跳躍動畫
+     * @param step 跳躍方式
+     * @returns 
+     */
+    private playBodyAnimation(step: number) {
+        if (!this.BodyAnimation) return;
+        if (step === 1) {
+            this.BodyAnimation.play(BodyAnimationEnum.ONE_STEP);
+        }
+        if (step === 2) {
+            this.BodyAnimation.play(BodyAnimationEnum.TWO_STEP);
         }
     }
 
@@ -64,10 +88,18 @@ export class PlayerController extends Component {
         this._startJump = true; // 標記開始跳躍
         this._jumpStep = step; // 
         this._curJumpTime = 0; // 重置開始跳躍時間
-        this._curJumpSpeed = this._jumpStep / this._jumpTime; // 依據時間計算速度
+
+        const clipName = step === 1 ? BodyAnimationEnum.ONE_STEP : BodyAnimationEnum.TWO_STEP;
+        const state = this.BodyAnimation.getState(clipName);
+        this._jumpTime = state.duration;  // 跳躍動畫時間
+        
+        this._curJumpSpeed = this._jumpStep * BLOCK_SIZE / this._jumpTime; // 依據時間計算速度
         this.node.getPosition(this._curPos); // 取得角色當前位置
         // Vector3 縮寫
         Vec3.add(this._targetPos, this._curPos, new Vec3(this._jumpStep * BLOCK_SIZE, 0, 0)); // 計算出目標位置
+
+        // run body animation
+        this.playBodyAnimation(step);
     }
 }
 
