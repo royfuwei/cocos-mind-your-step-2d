@@ -57,7 +57,7 @@ export class GameManager extends Component {
     }
 
     generateRoad() {
-        this.initial();
+        this.initialRoads();
         this.randomRoads();
         this.genNodeChildByRoads();
     }
@@ -78,8 +78,9 @@ export class GameManager extends Component {
 
     private init() {
         if (this.startMenu) this.startMenu.active = true;
-        // this.generateRoad();
-        this.initial();
+        if (this.stepLabel) this.stepLabel.string = 'Step: 0';
+
+        this.initialRoads();
 
         if (this.playerCtl) {
             this.playerCtl.setInputActive(false);
@@ -106,7 +107,7 @@ export class GameManager extends Component {
         }
         const road = this._roads[moveIndex];
         if (road === BoxTypeEnum.BOX_NONE) {
-            this.setCurStatue(GameStatusEnum.GS_END);
+            this.setCurStatue(GameStatusEnum.GS_INIT);
         }
     }
 
@@ -175,7 +176,7 @@ export class GameManager extends Component {
     /**
      * 初始化遊戲場景
      */
-    private initial() {
+    private initialRoads() {
         this.node.removeAllChildren();
         this._roads = [];
         // startPos
