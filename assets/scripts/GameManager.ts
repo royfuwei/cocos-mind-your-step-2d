@@ -1,5 +1,5 @@
-import { _decorator, Component, Node, Prefab, CCInteger, instantiate } from 'cc';
-import { BLOCK_SIZE } from './PlayerController';
+import { _decorator, Component, Node, Prefab, CCInteger, instantiate, Label, Vec3 } from 'cc';
+import { BLOCK_SIZE, PlayerController } from './PlayerController';
 const { ccclass, property } = _decorator;
 
 /**
@@ -16,6 +16,12 @@ enum BoxTypeEnum {
     BOX_NONE,
 }
 
+enum GameStatusEnum {
+    GS_INIT,
+    GS_PLAYING,
+    GS_END,
+}
+
 @ccclass('GameManager')
 export class GameManager extends Component {
 
@@ -26,11 +32,23 @@ export class GameManager extends Component {
     @property({ type: CCInteger })
     public roadLength: number = 50;
 
+    // 遊戲控制器
+    @property({ type: PlayerController })
+    private playerCtl: PlayerController | null = null;
+
+    // startMenu
+    @property({ type: Node })
+    private startMenu: Node | null = null;
+
+    // 計步器
+    @property({ type: Label })
+    private stepLabel: Label | null = null;
+
     // 產生的路線
     private _roads: BoxTypeEnum[] = [];
 
     start() {
-        this.generateRoad();
+        this.setCurStatue(GameStatusEnum.GS_INIT);
     }
 
     update(deltaTime: number) {
@@ -42,6 +60,54 @@ export class GameManager extends Component {
         this.randomRoads();
         this.genNodeChildByRoads();
     }
+
+    setCurStatue(state: GameStatusEnum) {
+        switch(state) {
+            case GameStatusEnum.GS_INIT:
+                this.init();
+                break;
+            case GameStatusEnum.GS_PLAYING:
+                this.playing();
+                break;
+            case GameStatusEnum.GS_END:
+                this.end();
+                break;
+        };
+    }
+
+    private init() {
+        if (this.startMenu) this.startMenu.active = true;
+        // this.generateRoad();
+        this.initial();
+
+        if (this.playerCtl) {
+            this.playerCtl.setInputActive(false);
+            this.playerCtl.node.setPosition(Vec3.ZERO);
+            // this.playerCtl.reset();
+        }
+    }
+
+    onStartButtonClicked() {
+        this.setCurStatue(GameStatusEnum.GS_PLAYING);
+    }
+
+    private playing() {
+        this.generateRoad();
+
+        if (this.startMenu) {
+            this.startMenu.active = false;
+        }
+
+        if (this.stepLabel) this.stepLabel.string = '0';
+
+        setTimeout(() => {
+            if (this.playerCtl) {
+                this.playerCtl.setInputActive(true);
+            }
+        }, 0.1);
+    }
+
+    private end() {}
 
     /**
      * 產生遊戲方塊亂數場景

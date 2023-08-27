@@ -23,7 +23,7 @@ export class PlayerController extends Component {
     BodyAnimation: Animation = null;
 
     start() {
-        input.on(Input.EventType.MOUSE_UP, this.onMouseUp, this);
+        // input.on(Input.EventType.MOUSE_UP, this.onMouseUp, this); // 改由外部控制
     }
 
     /**
@@ -37,6 +37,14 @@ export class PlayerController extends Component {
             this.stepEnd();
         } else {
             this.stepTween(deltaTime);
+        }
+    }
+
+    setInputActive(active: boolean) {
+        if (active) {
+            input.on(Input.EventType.MOUSE_UP, this.onMouseUp, this);
+        } else {
+            input.off(Input.EventType.MOUSE_UP, this.onMouseUp, this);
         }
     }
 
