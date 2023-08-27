@@ -1,5 +1,5 @@
 import { _decorator, Component, Node, Prefab, CCInteger, instantiate, Label, Vec3 } from 'cc';
-import { BLOCK_SIZE, PlayerController } from './PlayerController';
+import { BLOCK_SIZE, EMIT_JUMP_END, PlayerController } from './PlayerController';
 const { ccclass, property } = _decorator;
 
 /**
@@ -49,6 +49,7 @@ export class GameManager extends Component {
 
     start() {
         this.setCurStatue(GameStatusEnum.GS_INIT);
+        this.playerCtl?.node.on(EMIT_JUMP_END, this.onPlayerJumpEnd, this);
     }
 
     update(deltaTime: number) {
@@ -83,12 +84,30 @@ export class GameManager extends Component {
         if (this.playerCtl) {
             this.playerCtl.setInputActive(false);
             this.playerCtl.node.setPosition(Vec3.ZERO);
-            // this.playerCtl.reset();
+            this.playerCtl.reset();
         }
     }
 
     onStartButtonClicked() {
         this.setCurStatue(GameStatusEnum.GS_PLAYING);
+    }
+
+    onPlayerJumpEnd(moveIndex: number) {
+        if (this.stepLabel) {
+            this.stepLabel.string = `Step: ${moveIndex}`;
+        }
+        this.gameRule(moveIndex);
+    }
+
+    private gameRule(moveIndex: number) {
+        if (moveIndex > this.roadLength) {
+            this.setCurStatue(GameStatusEnum.GS_INIT);
+            return;
+        }
+        const road = this._roads[moveIndex];
+        if (road === BoxTypeEnum.BOX_NONE) {
+            this.setCurStatue(GameStatusEnum.GS_END);
+        }
     }
 
     private playing() {
@@ -98,7 +117,7 @@ export class GameManager extends Component {
             this.startMenu.active = false;
         }
 
-        if (this.stepLabel) this.stepLabel.string = '0';
+        if (this.stepLabel) this.stepLabel.string = 'Step: 0';
 
         setTimeout(() => {
             if (this.playerCtl) {

@@ -2,6 +2,7 @@ import { _decorator, Component, EventMouse, Input, input, Node, Vec3, Animation 
 const { ccclass, property } = _decorator;
 
 export const BLOCK_SIZE = 40;
+export const EMIT_JUMP_END = 'jump:end';
 
 enum BodyAnimationEnum {
     ONE_STEP = 'oneStep',
@@ -19,11 +20,25 @@ export class PlayerController extends Component {
     private _deltaPos: Vec3 = new Vec3(0, 0, 0);
     private _targetPos: Vec3 = new Vec3();
 
+    // 紀錄多少步
+    private _curMoveIndex = 0;
+
     @property(Animation)
     BodyAnimation: Animation = null;
 
     start() {
         // input.on(Input.EventType.MOUSE_UP, this.onMouseUp, this); // 改由外部控制
+    }
+
+    reset() {
+        this._curMoveIndex = 0;
+    }
+
+    /**
+     * 增加結束監聽事件
+     */
+    onOnceJumpEnd() {
+        this.node.emit(EMIT_JUMP_END, this._curMoveIndex);
     }
 
     /**
@@ -66,6 +81,7 @@ export class PlayerController extends Component {
     private stepEnd() {
         this.node.setPosition(this._targetPos); // 強制位置到終點
         this._startJump = false; // 清除跳躍狀態
+        this.onOnceJumpEnd();
     }
 
     private stepTween(deltaTime: number) {
@@ -108,6 +124,8 @@ export class PlayerController extends Component {
 
         // run body animation
         this.playBodyAnimation(step);
+
+        this._curMoveIndex += step;
     }
 }
 
